@@ -27,7 +27,7 @@
     title.innerHTML = `${info.title}<span class="period">.</span>`;
     kicker.textContent = `${info.number} / ${info.label}`;
     description.textContent = info.description;
-    count.textContent = `${artworks.length} photographs`;
+    count.textContent = `${artworks.length} works`;
     tabs.forEach(tab => {
       const active = tab.dataset.category === category;
       tab.classList.toggle('active', active);
@@ -38,12 +38,21 @@
       button.type = 'button';
       button.className = 'gallery-card';
       button.style.setProperty('--i', index % 12);
-      button.setAttribute('aria-label', `Open ${info.title.toLowerCase()} photograph ${index + 1}`);
+      button.setAttribute('aria-label', `View ${info.title.toLowerCase()} work ${index + 1}`);
       const img = document.createElement('img');
       img.src = artwork.src;
-      img.alt = `${info.title} photograph ${String(index + 1).padStart(2, '0')}`;
+      img.alt = `${info.title} work ${String(index + 1).padStart(2, '0')}`;
       img.loading = index < 6 ? 'eager' : 'lazy';
       img.decoding = 'async';
+      const classifyImage = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        button.classList.toggle('is-wide', ratio > 1.75);
+        button.classList.toggle('is-landscape', ratio > 1.18 && ratio <= 1.75);
+        button.classList.toggle('is-portrait', ratio < 0.82);
+        button.classList.toggle('is-square', ratio >= 0.82 && ratio <= 1.18);
+      };
+      img.addEventListener('load', classifyImage, { once: true });
+      if (img.complete && img.naturalWidth) classifyImage();
       button.append(img);
       button.addEventListener('click', () => openViewer(index));
       return button;
@@ -60,7 +69,7 @@
   function updateViewer() {
     const artwork = visibleArtworks[currentIndex];
     viewerImage.src = artwork.src;
-    viewerImage.alt = `${details[currentCategory].title} photograph ${currentIndex + 1}`;
+    viewerImage.alt = `${details[currentCategory].title} work ${currentIndex + 1}`;
     viewerCaption.textContent = `${details[currentCategory].title} · ${String(currentIndex + 1).padStart(2, '0')}`;
     viewerCount.textContent = `${String(currentIndex + 1).padStart(2, '0')} / ${String(visibleArtworks.length).padStart(2, '0')}`;
   }
@@ -71,6 +80,9 @@
   }
 
   tabs.forEach(tab => tab.addEventListener('click', () => showCategory(tab.dataset.category)));
+  document.querySelectorAll('[data-home-category]').forEach(link => {
+    link.addEventListener('click', () => showCategory(link.dataset.homeCategory));
+  });
   document.querySelector('.lightbox-close').addEventListener('click', () => lightbox.close());
   document.querySelector('.lightbox-prev').addEventListener('click', () => moveViewer(-1));
   document.querySelector('.lightbox-next').addEventListener('click', () => moveViewer(1));
